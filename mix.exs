@@ -19,6 +19,7 @@ defmodule Chat.Mixfile do
     [
       {:secure_random, "~> 0.5.0"},
       {:ranch, "~> 1.2"},
+      {:exprotobuf, "~> 1.2"},
       {:credo, "~> 0.4.9"} # Not necessary but useful.
     ]
   end

@@ -29,10 +29,23 @@ defmodule Chat.Listener do
   def listen(socket, transport, worker_pid) do
     case transport.recv(socket, 0, 5 * 60 * 1_000) do
       {:ok, msg} ->
-        :ok = Worker.handle_msg(worker_pid, String.trim(msg))
+        case try_decode(msg) do
+          {:ok, decoded} -> Worker.handle_msg(worker_pid, decoded)
+          {:error, _error} -> Logger.error "Failed to decode a message!"
+        end
+
         listen(socket, transport, worker_pid)
       _ ->
         :ok = transport.close(socket)
+    end
+  end
+
+  def try_decode(msg) do
+    try do
+      decoded = Chat.Protocol.Msg.decode(msg)
+      {:ok, decoded}
+    rescue
+      error -> {:error, error}
     end
   end
 end
