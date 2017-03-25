@@ -4,6 +4,9 @@ defmodule Chat.Listener do
   worker process.
   """
 
+  @header_byte_length 4
+  @header_bit_length 32
+
   require Logger
 
   alias Chat.Worker
@@ -20,56 +23,64 @@ defmodule Chat.Listener do
     id = SecureRandom.uuid
     {:ok, worker_pid} = Worker.start_link(socket, transport, id)
 
-    Logger.debug "client connection established; "
-      <> "listener pid = #{inspect self()}; worker pid = #{inspect worker_pid}"
+    Logger.info "client connected, assigned id = #{id}"
 
     state = %{
       socket: socket,
       transport: transport,
       client_id: id,
-      worker_pid: worker_pid
+      worker_pid: worker_pid,
+      error: nil
     }
 
     listen(state)
   end
 
   def listen(state) do
-    {:ok, length} = wait_for_msg(state)
+    Logger.info "listening for an incoming message from client #{state.client_id}"
 
-    read_msg(state, length)
+    case wait_for_msg(state) do
+      {:ok, msg_length} ->
+        Logger.info "message received from client #{state.client_id}, length = #{msg_length}"
+        case read_msg(state, msg_length) do
+          {:ok, message} ->
+            Logger.info "message contents = #{inspect(message)}"
+            listen(state)
+          :closed ->
+            Logger.info "client disconnected"
+            :ok
+        end
 
-    listen(state)
-  end
-
-  @doc """
-  Waits for a message on the socket. Once a message arrives, the length header is read
-  and the byte length of the message is returned.
-  """
-  def wait_for_msg(state) do
-    case state.transport.recv(state.socket, 4, 5 * 60 * 1_000) do
-      {:ok, msg} ->
-        <<length :: size(32)>> = msg
-        {:ok, length}
-
-      _ ->
-        :ok = state.transport.close(state.socket)
+      :closed ->
+        Logger.info "client disconnected"
+        :ok
     end
   end
 
   @doc """
   TODO
   """
-  def read_msg(state, length) do
-    case state.transport.recv(state.socket, length, 5 * 60 * 1_000) do
-      {:ok, msg} ->
-        case try_decode(msg) do
-          {:ok, decoded} -> Worker.handle_msg(state.worker_pid, decoded)
-          {:error, _error} -> Logger.error "Failed to decode a message!"
-        end
-
-        listen(state)
+  def wait_for_msg(state) do
+    case state.transport.recv(state.socket, @header_byte_length, 5 * 60 * 1_000) do
+      {:ok, header} ->
+        <<msg_length::size(@header_bit_length)>> = header
+        {:ok, msg_length}
       _ ->
         :ok = state.transport.close(state.socket)
+        :closed
+    end
+  end
+
+  @doc """
+  TODO
+  """
+  def read_msg(state, msg_length) do
+    case state.transport.recv(state.socket, msg_length, 5 * 60 * 1_000) do
+      {:ok, msg} ->
+        {:ok, msg}
+      _ ->
+        :ok = state.transport.close(state.socket)
+        :closed
     end
   end
 

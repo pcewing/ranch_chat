@@ -1,14 +1,18 @@
 # The directory Mix will write compiled artifacts to.
-/_build
+/Server/_build
+/Client/_build
 
 # If you run "mix test --cover", coverage assets end up here.
-/cover
+/Server/cover
+/Client/cover
 
 # The directory Mix downloads your dependencies sources to.
-/deps
+/Server/deps
+/Client/deps
 
 # Where 3rd-party dependencies like ExDoc output generated docs.
-/doc
+/Server/doc
+/Client/doc
 
 # If the VM crashes, it generates a dump, let's ignore it too.
 erl_crash.dump
