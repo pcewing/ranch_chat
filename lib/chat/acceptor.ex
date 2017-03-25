@@ -3,17 +3,21 @@ defmodule Chat.Acceptor do
   Accepts client connections and spawns listener processes to accomodate them.
   """
 
-  alias Chat.Listener
+  require Logger
 
   def start_link do
-    opts = [port: Application.get_env(:chat, :port)]
+    port = Application.get_env(:chat, :port)
+
+    Logger.info("listening for client connections on port #{port}")
+
+    opts = [port: port]
 
     {:ok, _} = :ranch.start_listener(
       :chat,
       100,
       :ranch_tcp,
       opts,
-      Listener,
+      Chat.Listener,
       []
     )
   end

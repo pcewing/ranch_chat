@@ -21,22 +21,55 @@ defmodule Chat.Listener do
     {:ok, worker_pid} = Worker.start_link(socket, transport, id)
 
     Logger.debug "client connection established; "
-      <> "listener pid = #{inspect self}; worker pid = #{inspect worker_pid}"
+      <> "listener pid = #{inspect self()}; worker pid = #{inspect worker_pid}"
 
-    listen(socket, transport, worker_pid)
+    state = %{
+      socket: socket,
+      transport: transport,
+      client_id: id,
+      worker_pid: worker_pid
+    }
+
+    listen(state)
   end
 
-  def listen(socket, transport, worker_pid) do
-    case transport.recv(socket, 0, 5 * 60 * 1_000) do
+  def listen(state) do
+    {:ok, length} = wait_for_msg(state)
+
+    read_msg(state, length)
+
+    listen(state)
+  end
+
+  @doc """
+  Waits for a message on the socket. Once a message arrives, the length header is read
+  and the byte length of the message is returned.
+  """
+  def wait_for_msg(state) do
+    case state.transport.recv(state.socket, 4, 5 * 60 * 1_000) do
+      {:ok, msg} ->
+        <<length :: size(32)>> = msg
+        {:ok, length}
+
+      _ ->
+        :ok = state.transport.close(state.socket)
+    end
+  end
+
+  @doc """
+  TODO
+  """
+  def read_msg(state, length) do
+    case state.transport.recv(state.socket, length, 5 * 60 * 1_000) do
       {:ok, msg} ->
         case try_decode(msg) do
-          {:ok, decoded} -> Worker.handle_msg(worker_pid, decoded)
+          {:ok, decoded} -> Worker.handle_msg(state.worker_pid, decoded)
           {:error, _error} -> Logger.error "Failed to decode a message!"
         end
 
-        listen(socket, transport, worker_pid)
+        listen(state)
       _ ->
-        :ok = transport.close(socket)
+        :ok = state.transport.close(state.socket)
     end
   end
 

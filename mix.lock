@@ -1,6 +1,6 @@
 %{"bunt": {:hex, :bunt, "0.1.6", "5d95a6882f73f3b9969fdfd1953798046664e6f77ec4e486e6fafc7caad97c6f", [:mix], []},
   "credo": {:hex, :credo, "0.4.9", "3485def62e5ad484b3afb52e80175de7c54f152220129eeb3fed081ead26125b", [:mix], [{:bunt, "~> 0.1.6", [hex: :bunt, optional: false]}]},
   "exprotobuf": {:hex, :exprotobuf, "1.2.0", "31e8d449b342cec3f35f95c2272e018dc1de669e5f5ef01845e5e488b164837c", [:mix], [{:gpb, "~> 3.24", [hex: :gpb, optional: false]}]},
-  "gpb": {:hex, :gpb, "3.25.2", "92f089ecdca6d098d9a65e41e879a498436d03b9727a28f0eae62d86587575db", [:rebar, :make], []},
+  "gpb": {:hex, :gpb, "3.25.2", "92f089ecdca6d098d9a65e41e879a498436d03b9727a28f0eae62d86587575db", [:make, :rebar], []},
   "ranch": {:hex, :ranch, "1.2.1", "a6fb992c10f2187b46ffd17ce398ddf8a54f691b81768f9ef5f461ea7e28c762", [:make], []},
   "secure_random": {:hex, :secure_random, "0.5.0", "f49e4bfe686f7a78f0dd16700552e4135f02c122ef6dff35544e4f754641f688", [:mix], []}}
